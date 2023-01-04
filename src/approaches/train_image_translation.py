@@ -367,7 +367,7 @@ class Image_translation_block():
             os.system('rm tmp_{:04d}.mp4'.format(i))
 
 
-    def single_test(self, jpg=None, fls=None, filename=None, prefix='', grey_only=False):
+    def single_test(self, jpg=None, fls=None, filename=None,audiofile=None, prefix='', grey_only=False):
         import time
         st = time.time()
         self.G.eval()
@@ -383,7 +383,8 @@ class Image_translation_block():
             fls[:, 0::3] += 130
             fls[:, 1::3] += 80
 
-        writer = cv2.VideoWriter('out.mp4', cv2.VideoWriter_fourcc(*'mjpg'), 62.5, (256 * 3, 256))
+        #writer = cv2.VideoWriter('out.mp4', cv2.VideoWriter_fourcc(*'mjpg'), 62.5, (256 * 3, 256))
+        writer = cv2.VideoWriter('out.mp4', cv2.VideoWriter_fourcc(*'mjpg'), 62.5, (256, 256))
 
         for i, frame in enumerate(fls):
 
@@ -411,25 +412,33 @@ class Image_translation_block():
             # g_out[g_out < 0] = 0
             # ref_in = image_in[:, 3:6, :, :].cpu().detach().numpy().transpose((0, 3, 2, 1))
             # fls_in = image_in[:, 0:3, :, :].cpu().detach().numpy().transpose((0, 3, 2, 1))
-
+           
             if(grey_only):
                 g_out_grey =np.mean(g_out, axis=3, keepdims=True)
                 g_out[:, :, :, 0:1] = g_out[:, :, :, 1:2] = g_out[:, :, :, 2:3] = g_out_grey
 
 
             for i in range(g_out.shape[0]):
-                frame = np.concatenate((ref_in[i], g_out[i], fls_in[i]), axis=1) * 255.0
+                #frame = np.concatenate((ref_in[i], g_out[i], fls_in[i]), axis=1) * 255.0
+                frame = g_out[i] * 255.0
                 writer.write(frame.astype(np.uint8))
 
         writer.release()
         print('Time - only video:', time.time() - st)
 
+        print("filename[9:-16]",filename[9:-16]) # = test
+        print("prefix",prefix)
+        print("filename[:-4]",filename[:-4])
+        print("::::")
+        print()
         if(filename is None):
             filename = 'v'
-        os.system('ffmpeg -loglevel error -y -i out.mp4 -i {} -pix_fmt yuv420p -strict -2 examples/{}_{}.mp4'.format(
-            'examples/'+filename[9:-16]+'.wav',
-            prefix, filename[:-4]))
-        # os.system('rm out.mp4')
+        comm='ffmpeg -i out.mp4 -i '+audiofile+' -c:v copy -c:a aac tmp/out.mp4'
+        #comm='ffmpeg -loglevel error -y -i out.mp4 -i '+audiofile+' -pix_fmt yuv420p -strict -2 examples/{}_{}.mp4'.format(
+        #    prefix, filename[:-4])
+        print(comm)
+        os.system(comm)
+        os.system('rm out.mp4')
 
         print('Time - ffmpeg add audio:', time.time() - st)
 

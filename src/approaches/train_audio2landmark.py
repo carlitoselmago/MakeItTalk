@@ -147,7 +147,7 @@ class Audio2landmark_model():
         baseline_pred_fls[:, 48 * 3 + 1::3] *= self.opt_parser.amp_lip_y  # mouth y
         return baseline_pred_fls
 
-    def __train_pass__(self, au_emb=None, centerize_face=False, no_y_rotation=False, vis_fls=False):
+    def __train_pass__(self, au_emb=None, centerize_face=False, no_y_rotation=False, vis_fls=False,audiofile=None):
 
         # Step 1: init setup
         self.G.eval()
@@ -247,7 +247,11 @@ class Audio2landmark_model():
                 if(vis_fls):
                     from util.vis import Vis
                     Vis(fls=fake_fls_np, filename=video_name.split('\\')[-1].split('/')[-1], fps=62.5,
-                        audio_filenam=os.path.join('examples', video_name.split('\\')[-1].split('/')[-1]+'.wav'))
+                        audio_filenam=audiofile)
+                    """
+                    Vis(fls=fake_fls_np, filename=video_name.split('\\')[-1].split('/')[-1], fps=62.5,
+                        audio_filenam=os.path.join('MakeItTalk/examples', video_name.split('\\')[-1].split('/')[-1]+'.wav'))
+                    """
 
 
     def __close_face_lip__(self, fl):
@@ -261,9 +265,9 @@ class Audio2landmark_model():
                 idx = i
         return idx
 
-    def test(self, au_emb=None):
+    def test(self, au_emb=None,audiofile=None):
         with torch.no_grad():
-            self.__train_pass__(au_emb, vis_fls=True)
+            self.__train_pass__(au_emb, vis_fls=True,audiofile=audiofile)
 
     def __solve_inverse_lip2__(self, fl_dis_pred_pos_numpy):
         for j in range(fl_dis_pred_pos_numpy.shape[0]):
